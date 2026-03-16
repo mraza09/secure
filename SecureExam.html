@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureExam Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&display=swap');
+        
+        body { 
+            background-color: #050a14;
+            /* Placeholder space background. To use your specific image, replace this URL with 'bg.jpg' */
+            background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2500&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white; 
+            font-family: 'Inter', sans-serif; 
+            overflow: hidden; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        
+        /* Subtle grid/network overlay */
+        .mesh { 
+            position: fixed; inset: 0; z-index: -1; 
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            background-color: rgba(5, 10, 25, 0.3); /* Darken */
+            mask-image: radial-gradient(circle at center, black 50%, transparent 100%);
+            -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 100%);
+        }
+
+        /* The glowing outer bounds of the login panel */
+        .glow-container {
+            position: relative;
+            padding: 2px; /* extremely thin neon border */
+            border-radius: 2.2rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(236, 72, 153, 0.6), rgba(56, 189, 248, 1));
+            background-size: 200% 200%;
+            animation: gradient-shift 4s ease infinite alternate;
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+        }
+
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        /* The inner translucent glass panel */
+        .glass { 
+            background: rgba(12, 16, 33, 0.55); 
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 2.15rem;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .hidden { display: none !important; }
+        .fade-out { opacity: 0; transform: scale(0.95); pointer-events: none; filter: blur(15px); }
+        
+        /* Modern form inputs */
+        .cyber-input {
+            width: 100%;
+            background: rgba(5, 8, 18, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            color: white !important;
+            padding: 16px 20px !important;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .cyber-input::placeholder { color: rgba(255,255,255,0.4); }
+        .cyber-input:focus {
+            border-color: rgba(99, 102, 241, 0.8) !important;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.25) !important;
+            background: rgba(0, 0, 0, 0.8) !important;
+            outline: none;
+        }
+        
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 100px #0b101e inset !important;
+            -webkit-text-fill-color: white !important;
+        }
+
+        /* Glowing button */
+        .cyber-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #5b21b6, #4f46e5);
+            border-radius: 12px;
+            padding: 16px;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .cyber-btn:hover {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.7);
+            filter: brightness(1.2);
+            transform: translateY(-1px);
+        }
+        .cyber-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Toggle switcher */
+        .role-switch {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px;
+            padding: 4px;
+            display: inline-flex;
+            margin-bottom: 32px;
+        }
+        .role-btn {
+            border-radius: 26px;
+            padding: 10px 32px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .role-btn.active {
+            background: linear-gradient(90deg, #4f46e5, #6366f1);
+            color: white;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+        .role-btn.inactive {
+            color: rgba(255,255,255,0.5);
+            background: transparent;
+        }
+        .role-btn.inactive:hover {
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* Dashboard specific */
+        .glass-sidebar {
+            background: rgba(12, 16, 33, 0.75); 
+            backdrop-filter: blur(25px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.02);
+            border-radius: 2.5rem;
+        }
+        .dash-card {
+            background: rgba(20, 25, 45, 0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+            backdrop-filter: blur(15px);
+            border-radius: 2rem;
+            transition: all 0.3s;
+        }
+        .dash-card:hover {
+            background: rgba(30, 35, 60, 0.6);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Nebula/Space Background -->
+    <div class="mesh"></div>
+
+    <!-- Login Screen -->
+    <section id="login-screen" class="screen">
+        <div class="glow-container w-[420px]">
+            <div class="glass p-10 pt-12 pb-12 shadow-2xl relative">
+                
+                <!-- Custom Role Switcher -->
+                <div class="role-switch">
+                    <div id="btn-student" onclick="setRole('student')" class="role-btn active">Student</div>
+                    <div id="btn-teacher" onclick="setRole('teacher')" class="role-btn inactive">Teacher</div>
+                </div>
+
+                <h1 class="text-4xl font-black mb-2 tracking-tight">Portal <span class="text-indigo-300" id="role-title">Access</span></h1>
+                <p class="text-[11px] text-slate-400 uppercase tracking-[0.2em] mb-10 font-semibold" id="role-subtitle">Student Secure Login</p>
+                
+                <div class="space-y-5 w-full">
+                    <!-- Username Fields -->
+                    <div id="student-uid-container" class="transition-all duration-300">
+                        <input type="text" id="student-uid" placeholder="Registration No. e.g., STD-456-XYZ" class="cyber-input">
+                    </div>
+                    
+                    <div id="teacher-uid-container" class="hidden h-0 opacity-0 overflow-hidden transition-all duration-300">
+                        <input type="text" id="teacher-uid" placeholder="Teacher ID e.g., TCH-admin" class="cyber-input">
+                    </div>
+
+                    <!-- Password Fields -->
+                    <div id="student-password-container" class="transition-all duration-300">
+                        <input type="password" id="student-pass" placeholder="Student Password" class="cyber-input">
+                    </div>
+                    
+                    <div id="teacher-password-container" class="hidden h-0 opacity-0 overflow-hidden transition-all duration-300">
+                        <input type="password" id="teacher-pass" placeholder="Teacher Password" class="cyber-input">
+                    </div>
+                    
+                    <!-- Login Button -->
+                    <button onclick="login()" class="cyber-btn mt-6 pt-2">
+                        LOGIN SECURELY
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Dashboard -->
+    <section id="main-dash" class="screen fade-out hidden">
+        <div class="w-full max-w-6xl h-[85vh] flex gap-6">
+            <!-- Sidebar -->
+            <div class="w-64 glass-sidebar p-8 flex flex-col gap-3 relative overflow-hidden">
+                <div class="text-indigo-300 font-black text-xl mb-6 italic tracking-wider uppercase" id="menu-title">MENU</div>
+                <button onclick="showTab('home')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 transition font-bold text-sm flex items-center gap-3">🏠 Dashboard</button>
+                <button onclick="showTab('results')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 transition font-bold text-sm flex items-center gap-3">📊 Records</button>
+                <button onclick="showTab('chat')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 transition font-bold text-sm flex items-center gap-3">💬 Support</button>
+                <button onclick="location.reload()" class="mt-auto w-full p-4 text-rose-400 font-bold border border-rose-500/20 rounded-xl hover:bg-rose-500/10 transition">Logout</button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 glass-sidebar p-10 overflow-y-auto relative scroll-smooth">
+                <!-- Home Tab -->
+                <div id="tab-home" class="tab-content transition-all duration-500">
+                    <h2 class="text-4xl font-black mb-6 tracking-tight">Welcome Back, <span id="user-display" class="text-indigo-300 transition-colors">Student</span>!</h2>
+                    <div class="grid grid-cols-2 gap-5">
+                        <div id="active-exam-card" class="p-8 dash-card group">
+                            <p class="text-indigo-300 font-bold text-xs uppercase tracking-widest mb-1 transition-colors">Active Exam</p>
+                            <p class="text-2xl font-bold mt-2">Computer Science - Final</p>
+                        </div>
+                        <div id="status-card" class="p-8 dash-card group">
+                            <p class="text-emerald-400 font-bold text-xs uppercase tracking-widest mb-1 transition-colors">Security Status</p>
+                            <div class="flex items-center gap-3 mt-2">
+                                <div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+                                <p class="text-2xl font-bold">Verified & Secure</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Tab -->
+                <div id="tab-results" class="tab-content hidden opacity-0 transition-opacity duration-300">
+                    <h2 class="text-4xl font-black mb-6 tracking-tight">System Records</h2>
+                    <div class="p-10 border border-white/10 rounded-[2.5rem] bg-indigo-500/5 text-center shadow-lg">
+                        <p class="text-slate-400 text-sm mb-3 font-bold tracking-widest uppercase">Performance Metric</p>
+                        <p class="text-8xl font-black text-white mb-6 drop-shadow-[0_0_20px_rgba(99,102,241,0.5)]">92%</p>
+                        <button onclick="window.print()" class="bg-indigo-600/20 px-8 py-3 rounded-xl text-sm font-bold hover:bg-indigo-600/40 hover:text-white transition-all text-indigo-200 border border-indigo-500/30">Generate PDF Report</button>
+                    </div>
+                </div>
+
+                <!-- Chat Tab -->
+                <div id="tab-chat" class="tab-content hidden opacity-0 transition-opacity duration-300 flex flex-col h-full">
+                    <h2 class="text-4xl font-black mb-6 tracking-tight">Instant Support</h2>
+                    <div class="flex-1 bg-black/20 border border-white/5 rounded-[2rem] p-5 overflow-y-auto mb-5 text-sm space-y-4 shadow-inner" id="msg-box">
+                        <div class="bg-indigo-600/30 text-indigo-50 p-4 rounded-2xl rounded-tl-sm w-max max-w-[80%] shadow-sm border border-indigo-500/20 flex gap-3">
+                            <span class="text-xl">🤖</span>
+                            <div>
+                                <p class="font-bold text-xs text-indigo-300 mb-1">System Bot</p>
+                                <p>Hello! The system is fully operational. How can we assist you today?</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 bg-black/30 p-2 rounded-2xl border border-white/5">
+                        <input type="text" id="chat-in" placeholder="Type your message here..." class="flex-1 bg-transparent px-4 py-3 outline-none transition text-[15px]">
+                        <button onclick="sendMsg()" class="cyber-btn px-8 !w-auto">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        let currentRole = 'student';
+
+        // Animate tabs smoothly
+        function showTab(name) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(t => {
+                t.classList.remove('opacity-100');
+                t.classList.add('opacity-0');
+                setTimeout(() => { t.classList.add('hidden'); }, 300);
+            });
+
+            setTimeout(() => {
+                const activeTab = document.getElementById('tab-' + name);
+                activeTab.classList.remove('hidden');
+                setTimeout(() => {
+                    activeTab.classList.remove('opacity-0');
+                    activeTab.classList.add('opacity-100');
+                }, 10);
+            }, 300);
+        }
+
+        // Toggle between Student and Teacher Login Portal
+        function setRole(role) {
+            currentRole = role;
+            const btnStudent = document.getElementById('btn-student');
+            const btnTeacher = document.getElementById('btn-teacher');
+            const roleTitle = document.getElementById('role-title');
+            const roleSubtitle = document.getElementById('role-subtitle');
+            
+            // Containers
+            const stdUidCont = document.getElementById('student-uid-container');
+            const stdPassCont = document.getElementById('student-password-container');
+            const tchrUidCont = document.getElementById('teacher-uid-container');
+            const tchrPassCont = document.getElementById('teacher-password-container');
+
+            if (role === 'student') {
+                btnStudent.className = 'role-btn active';
+                btnTeacher.className = 'role-btn inactive';
+                roleTitle.innerText = 'Access';
+                roleTitle.className = 'text-indigo-300';
+                roleSubtitle.innerText = 'Student Secure Login';
+                
+                // Hide Teacher Fields
+                tchrUidCont.classList.add('h-0', 'opacity-0');
+                tchrPassCont.classList.add('h-0', 'opacity-0');
+                setTimeout(() => {
+                    tchrUidCont.classList.add('hidden');
+                    tchrPassCont.classList.add('hidden');
+                }, 300);
+
+                // Show Student Fields
+                stdUidCont.classList.remove('hidden');
+                stdPassCont.classList.remove('hidden');
+                setTimeout(() => {
+                    stdUidCont.classList.remove('h-0', 'opacity-0');
+                    stdPassCont.classList.remove('h-0', 'opacity-0');
+                }, 10);
+            } else {
+                btnTeacher.className = 'role-btn active';
+                btnStudent.className = 'role-btn inactive';
+                roleTitle.innerText = 'Admin';
+                roleTitle.className = 'text-fuchsia-400';
+                roleSubtitle.innerText = 'Teacher Secure Login';
+                
+                // Hide Student Fields
+                stdUidCont.classList.add('h-0', 'opacity-0');
+                stdPassCont.classList.add('h-0', 'opacity-0');
+                setTimeout(() => {
+                    stdUidCont.classList.add('hidden');
+                    stdPassCont.classList.add('hidden');
+                }, 300);
+
+                // Show Teacher Fields
+                tchrUidCont.classList.remove('hidden');
+                tchrPassCont.classList.remove('hidden');
+                setTimeout(() => {
+                    tchrUidCont.classList.remove('h-0', 'opacity-0');
+                    tchrPassCont.classList.remove('h-0', 'opacity-0');
+                }, 10);
+            }
+        }
+
+        // Handle Login Logic
+        function login() {
+            let id, pass;
+            if (currentRole === 'teacher') {
+                id = document.getElementById('teacher-uid').value; pass = document.getElementById('teacher-pass').value;
+            } else {
+                id = document.getElementById('student-uid').value; pass = document.getElementById('student-pass').value;
+            }
+
+            if(!id) return alert("Please enter your ID/Registration No.");
+            if(!pass) return alert("Please enter your password");
+            
+            const userDisplay = document.getElementById('user-display');
+            const menuTitle = document.getElementById('menu-title');
+            
+            if (currentRole === 'teacher') {
+                if (id !== 'admin' || pass !== 'admin') return alert("Invalid teacher credentials. Try ID: admin, Pass: admin");
+                userDisplay.innerText = "Admin " + id;
+                userDisplay.className = "text-fuchsia-400 transition-colors";
+                menuTitle.className = "text-fuchsia-400 font-black text-xl mb-6 italic tracking-wider uppercase";
+                document.getElementById('active-exam-card').innerHTML = `<p class="text-fuchsia-400 font-bold text-xs uppercase tracking-widest mb-1 transition-colors">Manage System</p><p class="text-2xl font-bold mt-2">Active Controls</p>`;
+                document.getElementById('status-card').innerHTML = `<p class="text-emerald-400 font-bold text-xs uppercase tracking-widest mb-1 transition-colors">System Integrity</p><div class="flex items-center gap-3 mt-2"><div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div><p class="text-2xl font-bold">100% Operational</p></div>`;
+            } else {
+                userDisplay.innerText = "Student " + id;
+                userDisplay.className = "text-indigo-300 transition-colors";
+                menuTitle.className = "text-indigo-300 font-black text-xl mb-6 italic tracking-wider uppercase";
+                document.getElementById('active-exam-card').innerHTML = `<p class="text-indigo-300 font-bold text-xs uppercase tracking-widest mb-1 transition-colors">Active Exam</p><p class="text-2xl font-bold mt-2">Computer Science - Final</p>`;
+                document.getElementById('status-card').innerHTML = `<p class="text-emerald-400 font-bold text-xs uppercase tracking-widest mb-1 transition-colors">Security Status</p><div class="flex items-center gap-3 mt-2"><div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div><p class="text-2xl font-bold">Verified & Secure</p></div>`;
+            }
+            
+            // Transition
+            document.getElementById('login-screen').classList.add('fade-out');
+            setTimeout(() => {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-dash').classList.remove('hidden');
+                setTimeout(() => document.getElementById('main-dash').classList.remove('fade-out'), 50);
+            }, 600);
+        }
+
+        function sendMsg() {
+            const inp = document.getElementById('chat-in');
+            const box = document.getElementById('msg-box');
+            if(!inp.value) return;
+            const isTeacher = currentRole === 'teacher';
+            const userColor = isTeacher ? 'bg-fuchsia-600' : 'bg-indigo-600';
+            
+            box.innerHTML += `
+                <div class="${userColor} text-white p-4 rounded-2xl rounded-tr-sm w-max max-w-[80%] ml-auto shadow-md flex flex-col items-end">
+                    <p class="font-bold text-xs text-white/70 mb-1">You</p>
+                    <p class="text-[14px] leading-relaxed">${inp.value}</p>
+                </div>
+            `;
+            inp.value = "";
+            box.scrollTop = box.scrollHeight;
+            
+            setTimeout(() => {
+                const replyBoxColor = isTeacher ? 'bg-fuchsia-900/40 text-fuchsia-100 border-fuchsia-500/20' : 'bg-indigo-900/40 text-indigo-100 border-indigo-500/20';
+                const replyTextColor = isTeacher ? 'text-fuchsia-300' : 'text-indigo-300';
+                const replyText = isTeacher ? 'Command received. Data logged securely.' : 'A teacher will review your request shortly.';
+                
+                box.innerHTML += `
+                    <div class="${replyBoxColor} p-4 rounded-2xl rounded-tl-sm w-max max-w-[80%] border flex gap-3 items-start shadow-sm">
+                        <span class="text-xl">🤖</span>
+                        <div>
+                            <p class="font-bold text-xs ${replyTextColor} mb-1">System Bot</p>
+                            <p class="text-[14px] leading-relaxed italic opacity-90">${replyText}</p>
+                        </div>
+                    </div>
+                `;
+                box.scrollTop = box.scrollHeight;
+            }, 1000);
+        }
+        
+        document.getElementById('student-uid').addEventListener('keypress', e => { if(e.key === 'Enter') document.getElementById('student-pass').focus(); });
+        document.getElementById('student-pass').addEventListener('keypress', e => { if(e.key === 'Enter') login(); });
+        document.getElementById('teacher-uid').addEventListener('keypress', e => { if(e.key === 'Enter') document.getElementById('teacher-pass').focus(); });
+        document.getElementById('teacher-pass').addEventListener('keypress', e => { if(e.key === 'Enter') login(); });
+    </script>
+</body>
+</html>
