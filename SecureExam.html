@@ -437,6 +437,15 @@
         document.getElementById('student-pass').addEventListener('keypress', e => { if(e.key === 'Enter') login(); });
         document.getElementById('teacher-uid').addEventListener('keypress', e => { if(e.key === 'Enter') document.getElementById('teacher-pass').focus(); });
         document.getElementById('teacher-pass').addEventListener('keypress', e => { if(e.key === 'Enter') login(); });
+        {
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/SecureExam.html"
+    }
+  ]
+}
+
     </script>
 </body>
 </html>
